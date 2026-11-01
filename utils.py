@@ -136,20 +136,35 @@ def call_llm(prompt: str, system_prompt: str = "") -> str:
 
 
 def _call_groq(prompt: str, system_prompt: str, api_key: str) -> str:
-    """Call Groq API."""
+    """Call Groq API with automatic model fallback."""
     from groq import Groq
     client = Groq(api_key=api_key)
     messages = []
     if system_prompt:
         messages.append({"role": "system", "content": system_prompt})
     messages.append({"role": "user", "content": prompt})
-    response = client.chat.completions.create(
-        model="llama-3.1-70b-versatile",
-        messages=messages,
-        temperature=0.3,
-        max_tokens=2048,
-    )
-    return response.choices[0].message.content
+
+    models_to_try = [
+        "llama-3.3-70b-versatile",
+        "llama-3.1-70b-versatile",
+        "llama-3.1-8b-instant",
+    ]
+    last_err = None
+    for model_name in models_to_try:
+        try:
+            response = client.chat.completions.create(
+                model=model_name,
+                messages=messages,
+                temperature=0.3,
+                max_tokens=2048,
+            )
+            return response.choices[0].message.content
+        except Exception as e:
+            last_err = e
+            continue
+    if last_err:
+        raise last_err
+    return _demo_llm_response(prompt)
 
 
 def _call_gemini(prompt: str, system_prompt: str, api_key: str) -> str:

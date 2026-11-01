@@ -353,7 +353,7 @@ with st.sidebar:
     # Reset
     if st.button("🗑️ Clear All Evidence", use_container_width=True):
         for key in ["evidence_chain", "master_timeline", "image_analyses",
-                     "audio_analyses", "video_analyses", "chat_history"]:
+                     "audio_analyses", "video_analyses", "chat_history", "generated_pdf", "generated_pdf_filename"]:
             st.session_state[key] = []
         st.rerun()
 

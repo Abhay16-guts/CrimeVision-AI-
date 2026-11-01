@@ -504,35 +504,43 @@ def render_pdf_export_tab():
         with st.spinner("📝 Compiling forensic report with ReportLab..."):
             try:
                 pdf_bytes = generate_forensic_pdf()
+                now = datetime.datetime.now()
+                filename = f"CrimeVision_AI_Report_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
+
+                st.session_state["generated_pdf"] = pdf_bytes
+                st.session_state["generated_pdf_filename"] = filename
+                st.session_state["generated_pdf_time"] = now.strftime("%Y-%m-%d %H:%M:%S")
 
                 st.success("✅ Forensic report generated successfully!")
                 st.balloons()
 
-                now = datetime.datetime.now()
-                filename = f"CrimeVision_AI_Report_{now.strftime('%Y%m%d_%H%M%S')}.pdf"
-
-                st.download_button(
-                    label="⬇️ Download Forensic Report PDF",
-                    data=pdf_bytes,
-                    file_name=filename,
-                    mime="application/pdf",
-                    use_container_width=True,
-                    type="primary",
-                )
-
-                st.markdown(
-                    f'<div style="background:#0f2a1a;border:1px solid #22C55E;padding:16px;'
-                    f'border-radius:8px;margin-top:12px;">'
-                    f'<div style="color:#22C55E;font-weight:bold;font-size:14px;">📄 Report Ready</div>'
-                    f'<div style="color:#86efac;font-size:13px;margin-top:4px;">'
-                    f'File: {filename}<br/>'
-                    f'Size: {len(pdf_bytes) / 1024:.1f} KB<br/>'
-                    f'Evidence Items: {evidence_count}<br/>'
-                    f'Generated: {now.strftime("%Y-%m-%d %H:%M:%S")}'
-                    f'</div></div>',
-                    unsafe_allow_html=True,
-                )
-
             except Exception as e:
                 st.error(f"❌ Report generation failed: {e}")
                 st.exception(e)
+
+    if st.session_state.get("generated_pdf"):
+        pdf_bytes = st.session_state["generated_pdf"]
+        filename = st.session_state.get("generated_pdf_filename", "CrimeVision_AI_Report.pdf")
+
+        st.download_button(
+            label="⬇️ Download Forensic Report PDF",
+            data=pdf_bytes,
+            file_name=filename,
+            mime="application/pdf",
+            use_container_width=True,
+            type="primary",
+            key="download_pdf_btn",
+        )
+
+        st.markdown(
+            f'<div style="background:#0f2a1a;border:1px solid #22C55E;padding:16px;'
+            f'border-radius:8px;margin-top:12px;">'
+            f'<div style="color:#22C55E;font-weight:bold;font-size:14px;">📄 Report Ready</div>'
+            f'<div style="color:#86efac;font-size:13px;margin-top:4px;">'
+            f'File: {filename}<br/>'
+            f'Size: {len(pdf_bytes) / 1024:.1f} KB<br/>'
+            f'Evidence Items: {evidence_count}<br/>'
+            f'Generated: {st.session_state.get("generated_pdf_time", "")}'
+            f'</div></div>',
+            unsafe_allow_html=True,
+        )
